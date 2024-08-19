@@ -1,18 +1,17 @@
+import {useState, useEffect} from 'react';
+import { Link } from 'react-router-dom';
 
-
-import {useState, useEffect, useRef} from 'react';
-import PropTypes from 'prop-types';
+import useMarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
-import useMarvelService from '../../services/MarvelService';
 
 import './comicsList.scss';
 
-const ComicsList = (props) => {
+const ComicsList = () => {
 
     const [comicsList, setComicsList] = useState([]);
-    const [newComicsLoading, setNewComicsLoading] = useState(false);
-    const [offset, setOffset] = useState(210);
+    const [newItemLoading, setnewItemLoading] = useState(false);
+    const [offset, setOffset] = useState(0);
     const [comicsEnded, setComicsEnded] = useState(false);
 
     const {loading, error, getAllComics} = useMarvelService();
@@ -22,7 +21,7 @@ const ComicsList = (props) => {
     }, [])
 
     const onRequest = (offset, initial) => {
-        initial ? setNewComicsLoading(false) : setNewComicsLoading(true);
+        initial ? setnewItemLoading(false) : setnewItemLoading(true);
         getAllComics(offset)
             .then(onComicsListLoaded)
     }
@@ -32,63 +31,36 @@ const ComicsList = (props) => {
         if (newComicsList.length < 8) {
             ended = true;
         }
-
-        setComicsList(comicsList => [...comicsList, ...newComicsList]);
-        setNewComicsLoading(newComicsLoading => false);
-        setOffset(offset => offset + 8);
-        setComicsEnded(comicsEnded => ended);
+        setComicsList([...comicsList, ...newComicsList]);
+        setnewItemLoading(false);
+        setOffset(offset + 8);
+        setComicsEnded(ended);
     }
 
-    const itemRefs = useRef([]);
-
-    const focusOnItem = (id) => {
-
-        itemRefs.current.forEach(item => item.classList.remove('comics__item_selected'));
-        itemRefs.current[id].classList.add('comics__item_selected');
-        itemRefs.current[id].focus();
-    }
-
-    function renderItems(arr) {
-        const items =  arr.map((item, i) => {
-            // let imgStyle = {'objectFit' : 'cover'};
-            // if (item.thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg') {
-            //     imgStyle = {'objectFit' : 'unset'};
-            // }
-            
+    function renderItems (arr) {
+        const items = arr.map((item, i) => {
             return (
-                <li 
-                    className="comics__item"
-                    tabIndex={0}
-                    ref={el => itemRefs.current[i] = el}
-                    key={item.id}
-                    onClick={() => {
-                        props.onComicsSelected(item.id);
-                        focusOnItem(i);
-                    }}
-                    onKeyUp={(e) => {
-                        if (e.key === ' ' || e.key === "Enter") {
-                            props.onComicsSelected(item.id);
-                            focusOnItem(i);
-                        }
-                    }}>
+                <li className="comics__item" key={i}>
+                    <Link to={`/comics/${item.id}`}>
                         <img src={item.thumbnail} alt={item.title} className="comics__item-img"/>
                         <div className="comics__item-name">{item.title}</div>
-                        <div className="comics__item-price">${item.price}</div>
+                        <div className="comics__item-price">{item.price}</div>
+                    </Link>
                 </li>
             )
-        });
-        // А эта конструкция вынесена для центровки спиннера/ошибки
+        })
+
         return (
             <ul className="comics__grid">
                 {items}
             </ul>
         )
     }
-    
+
     const items = renderItems(comicsList);
 
     const errorMessage = error ? <ErrorMessage/> : null;
-    const spinner = loading && !newComicsLoading ? <Spinner/> : null;
+    const spinner = loading && !newItemLoading ? <Spinner/> : null;
 
     return (
         <div className="comics__list">
@@ -96,18 +68,14 @@ const ComicsList = (props) => {
             {spinner}
             {items}
             <button 
+                disabled={newItemLoading} 
+                style={{'display' : comicsEnded ? 'none' : 'block'}}
                 className="button button__main button__long"
-                disabled={newComicsLoading}
-                style={{'display': comicsEnded ? 'none' : 'block'}}
                 onClick={() => onRequest(offset)}>
                 <div className="inner">load more</div>
             </button>
         </div>
     )
-}
-
-ComicsList.propTypes = {
-    onComicsSelected: PropTypes.func.isRequired
 }
 
 export default ComicsList;
