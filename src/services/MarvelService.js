@@ -4,14 +4,15 @@ const useMarvelService = () => {
     const { request, clearError, process, setProcess } = useHttp();
 
     const _apiBase = "https://marvel-server-zeta.vercel.app/";
-    // ЗДЕСЬ БУДЕТ ВАШ КЛЮЧ, ЭТОТ КЛЮЧ МОЖЕТ НЕ РАБОТАТЬ
     const _apiKey = 'apikey=d4eecb0c66dedbfae4eab45d312fc1df';
     const _baseOffset = 0;
+    const charactersLimit = 9;
+    const comicsLimit = 8;
 
     const getAllCharacters = async (offset = _baseOffset) => {
 
         const res = await request(
-            `${_apiBase}characters?limit=9&offset=${offset}&${_apiKey}`
+            `${_apiBase}characters?limit=${charactersLimit}&offset=${offset}&${_apiKey}`
         );
 
         return res.data.results.map(_transformCharacter);
@@ -40,7 +41,7 @@ const useMarvelService = () => {
 
     const getAllComics = async (offset = 0) => {
         const res = await request(
-            `${_apiBase}comics?orderBy=issueNumber&limit=8&offset=${offset}&${_apiKey}`
+            `${_apiBase}comics?orderBy=issueNumber&limit=${comicsLimit}&offset=${offset}&${_apiKey}`
         );
         return res.data.results.map(_transformComics);
     };
